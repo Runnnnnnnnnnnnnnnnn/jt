@@ -6,16 +6,16 @@ import yfinance as yf
 from dotenv import load_dotenv
 
 # ======================
-# 設定
+# 環境変数
 # ======================
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-# ← あなたが指定したチャンネルID
-CHANNEL_ID = 1454927517365436648
-
 if TOKEN is None:
-    raise ValueError("DISCORD_TOKEN が .env に設定されていません")
+    raise ValueError("DISCORD_TOKEN が設定されていません")
+
+# あなたのチャンネルID
+CHANNEL_ID = 1454927517365436648
 
 # ======================
 # Discord設定
@@ -33,7 +33,7 @@ def get_jt_price():
     return ticker.info.get("regularMarketPrice")
 
 # ======================
-# Button View
+# ボタンView
 # ======================
 class JTPriceView(View):
     def __init__(self):
@@ -52,7 +52,7 @@ class JTPriceView(View):
 
         if price is None:
             await interaction.response.send_message(
-                "株価を取得できませんでした",
+                "❌ 株価を取得できませんでした",
                 ephemeral=True
             )
             return
@@ -67,11 +67,13 @@ class JTPriceView(View):
 # ======================
 @bot.event
 async def on_ready():
-    print(f"ログイン完了: {bot.user}")
+    print(f"✅ ログイン完了: {bot.user}")
 
-    channel = bot.get_channel(CHANNEL_ID)
-    if channel is None:
-        print("指定チャンネルが見つかりません")
+    # 再起動耐性のため fetch_channel を使う
+    try:
+        channel = await bot.fetch_channel(CHANNEL_ID)
+    except Exception as e:
+        print("❌ チャンネル取得失敗:", e)
         return
 
     await channel.send(
@@ -79,4 +81,7 @@ async def on_ready():
         view=JTPriceView()
     )
 
+# ======================
+# 起動
+# ======================
 bot.run(TOKEN)
